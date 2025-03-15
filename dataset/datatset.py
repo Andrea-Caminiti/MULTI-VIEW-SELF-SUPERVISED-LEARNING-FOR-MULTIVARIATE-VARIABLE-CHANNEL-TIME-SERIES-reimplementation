@@ -89,7 +89,7 @@ def createDatasets(folderPath):
         raw = load_fif_file(path)
         raw = extract_channels(raw)
         labels = extract_labels(raw)
-        data = [list(zip(np.split(ch, 3000), labels)) for ch in raw.get_data()]
+        data = [list(zip(np.split(ch, len(ch)//3000), labels)) for ch in raw.get_data()]
         subject = f[:5] if 'sleep-cassette' in folderPath else f[:f.index('_')]  
         if subject not in thinkers:
             thinkers[subject] = [data]
