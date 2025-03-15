@@ -89,11 +89,12 @@ def createDatasets(folderPath):
         raw = load_fif_file(path)
         raw = extract_channels(raw)
         labels = extract_labels(raw)
-        epochs = mne.Epochs(raw, labels, tmin=0, tmax=29/256, decim=1, baseline=None)
-        data = epochs.get_data()
-        subject = f[:5] if 'sleep-cassette' in folderPath else f[:f.index('_')]
-        thinkers[subject] = thinkers.get(subject, []).append(list(zip(data, labels)))
-        
+        data = [list(zip(np.split(ch, 3000), labels)) for ch in raw.get_data()]
+        subject = f[:5] if 'sleep-cassette' in folderPath else f[:f.index('_')]  
+        if subject not in thinkers:
+            thinkers[subject] = [data]
+        else:
+            thinkers[subject].append(data)
     train_subj, test_subj = train_test_split(list(thinkers.keys()), test_size=0.2)
     train = []
     test = []

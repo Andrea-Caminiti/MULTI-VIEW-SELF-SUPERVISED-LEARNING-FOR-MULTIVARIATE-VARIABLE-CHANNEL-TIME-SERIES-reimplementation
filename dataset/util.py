@@ -23,10 +23,10 @@ def extract_channels(raw):
 def extract_labels(raw):
     events_map = {'Sleep stage W': 0, 'Sleep stage 1': 1, 'Sleep stage 2': 2, 'Sleep stage 3': 3, 'Sleep stage 4': 3, 'Sleep stage R': 4}
     try:
-        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0]
+        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0][:, -1]
     except ValueError:
         events_map = {'nonrem1': 0, 'nonrem2': 1, 'nonrem3': 2, 'rem': 3, 'wake': 4}
-        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0]
+        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0][:, -1]
     return events
 
 if __name__ == '__main__':
