@@ -3,8 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from util import load_fif_file, extract_channels, extract_labels
 import os
-import mne
-from sklearn.model_selection import train_test_split
+import gc
 
 class EEGDataset(Dataset):
     def __init__(self, data, transform=None):
@@ -81,34 +80,41 @@ def createDataloaders(eegDataset, dim):
     for i in range(num):
         yield DataLoader(eegDataset[i*dim:(i+1)*dim], batch_size=32)
         
-def createDatasets(folderPath):
+def window(eeg_data, window_size=3000):
+    _, num_samples = eeg_data.shape
+    num_windows = num_samples // window_size
+    
+    windows = np.array(np.split(eeg_data[:, :num_windows * window_size], num_windows, axis=1))
+    
+    return windows 
+
+def createDataset(folderPath):
     
     thinkers = {}
-    for f in os.listdir(folderPath):
+    for i, f in enumerate(os.listdir(folderPath)):
         path = os.path.join(folderPath, f)
         raw = load_fif_file(path)
         raw = extract_channels(raw)
         labels = extract_labels(raw)
-        data = [list(zip(np.split(ch, len(ch)//3000), labels)) for ch in raw.get_data()]
-        subject = f[:5] if 'sleep-cassette' in folderPath else f[:f.index('_')]  
+        if 'sleep-cassette' in folderPath:
+            data = [list(zip(np.split(ch, len(ch)//3000), labels)) for ch in raw.get_data()] # The data in sleep cassette is made up of 30s windows
+            subject = f[:5]  
+        else:
+            data = [list(zip(ch, labels)) for ch in window(raw.get_data())]
+            subject = f[:f.index('_')]  
         if subject not in thinkers:
             thinkers[subject] = [data]
         else:
             thinkers[subject].append(data)
-    train_subj, test_subj = train_test_split(list(thinkers.keys()), test_size=0.2)
-    train = []
-    test = []
-    for sub in train_subj:
-        train += thinkers[sub]
-    for sub in test_subj:
-        test += thinkers[sub]
-    aug = EEGAugmentations()
-    train_d_set = EEGDataset(train, aug)
-    test_d_set = EEGDataset(test)
+        del data, labels, raw
+        gc.collect()
     
-    return train_d_set, test_d_set
+    aug = EEGAugmentations()
+    d_set = EEGDataset(list(thinkers.values()), aug)
+    
+    return d_set
     
             
          
 if __name__ == '__main__':
-    createDatasets('data/Dataset/sleep-cassette')
+    createDataset('data/Dataset/sleep-cassette')
