@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from util import load_fif_file, extract_channels, extract_labels
+from dataset.util import load_fif_file, extract_channels, extract_labels
 import os
 import gc
 
