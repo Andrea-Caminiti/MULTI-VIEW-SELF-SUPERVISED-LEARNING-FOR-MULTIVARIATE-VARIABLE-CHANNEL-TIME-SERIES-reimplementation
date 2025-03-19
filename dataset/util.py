@@ -3,6 +3,8 @@ import numpy as np
 import os
 import scipy.io
 
+mne.set_log_level(False)
+
 def load_fif_file(filepath):
     raw = mne.io.read_raw_fif(filepath, preload=True)
     return raw
@@ -26,8 +28,20 @@ def extract_labels(raw):
         events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0][:, -1]
     except ValueError:
         events_map = {'nonrem1': 0, 'nonrem2': 1, 'nonrem3': 2, 'rem': 3, 'wake': 4}
-        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0][:, -1]
-    return events
+        events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0]
+
+    start = events[0][0]
+    events = events[:, -1]
+    return events, start
+
+def window(eeg_data, start, window_size=3000):
+    num_samples = len(eeg_data[start:])
+    num_windows = num_samples // window_size
+    end = num_samples % window_size
+    data = eeg_data[start:-end] if end != 0 else eeg_data[start:]
+    windows = np.array(np.split(data, num_windows))
+    
+    return windows 
 
 if __name__ == '__main__':
     path = 'data/Dataset/You snooze you win/training_fif/tr03-0005_001_30s_raw.fif'

@@ -14,8 +14,7 @@ class TS2VecLoss(torch.nn.Module):
         Returns:
             TS2Vec loss scalar.
         """
-        batch_size, time_steps, _ = z_t1.shape
-
+        
         # Normalize embeddings
         z_t1 = F.normalize(z_t1, dim=-1)
         z_t2 = F.normalize(z_t2, dim=-1)

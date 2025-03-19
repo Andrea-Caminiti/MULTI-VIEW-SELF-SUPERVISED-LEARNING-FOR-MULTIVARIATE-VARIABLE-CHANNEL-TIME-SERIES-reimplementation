@@ -1,9 +1,10 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from dataset.util import load_fif_file, extract_channels, extract_labels
+from dataset.util import load_fif_file, extract_channels, extract_labels, window
 import os
 import gc
+from tqdm import tqdm
 
 class EEGDataset(Dataset):
     def __init__(self, data, transform=None):
@@ -21,12 +22,12 @@ class EEGDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        sample, labels = self.data[idx]  # Shape: [(num_channels, timepoints), labels]
-        
+        sample, labels = self.data[idx]  # Shape: channels, labels
         if self.transform:
-            sample = self.transform(sample)
+            for i in range(len(sample)):
+                sample[i] = self.transform(sample[i])
 
-        return torch.tensor(sample, dtype=torch.float32), torch.tensor(labels, dtype=torch.int16)
+        return torch.tensor(np.array(sample), dtype=torch.float32), torch.tensor(labels, dtype=torch.int16)
 
 class EEGAugmentations:
     def __init__(self, noise_std=0.05, scaling_factor=0.1, mask_prob=0.2, time_warp_ratio=0.1):
@@ -80,32 +81,24 @@ def createDataloaders(eegDataset, dim):
     for i in range(num):
         yield DataLoader(eegDataset[i*dim:(i+1)*dim], batch_size=32)
         
-def window(eeg_data, window_size=3000):
-    _, num_samples = eeg_data.shape
-    num_windows = num_samples // window_size
-    
-    windows = np.array(np.split(eeg_data[:, :num_windows * window_size], num_windows, axis=1))
-    
-    return windows 
+
 
 def createDataset(folderPath):
     
     thinkers = {}
-    for i, f in enumerate(os.listdir(folderPath)):
+    for i, f in tqdm(enumerate(os.listdir(folderPath)), desc='Loading Dataset...', leave=False):
         path = os.path.join(folderPath, f)
         raw = load_fif_file(path)
         raw = extract_channels(raw)
-        labels = extract_labels(raw)
+        labels, start = extract_labels(raw)
+        subject = f[:f.index('_')]  
         if 'sleep-cassette' in folderPath:
-            data = [list(zip(np.split(ch, len(ch)//3000), labels)) for ch in raw.get_data()] # The data in sleep cassette is made up of 30s windows
-            subject = f[:5]  
+            chs = [np.split(ch, len(ch)//3000) for ch in raw.get_data()] # The data in sleep cassette is made up of 30s windows
+            data = [chs, labels]
         else:
-            data = [list(zip(ch, labels)) for ch in window(raw.get_data())]
-            subject = f[:f.index('_')]  
-        if subject not in thinkers:
-            thinkers[subject] = [data]
-        else:
-            thinkers[subject].append(data)
+            chs = [window(ch, start) for ch in raw.get_data()]
+            data = [chs, labels]
+        thinkers[subject] = data
         del data, labels, raw
         gc.collect()
     
