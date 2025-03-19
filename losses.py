@@ -18,10 +18,9 @@ class TS2VecLoss(torch.nn.Module):
         # Normalize embeddings
         z_t1 = F.normalize(z_t1, dim=-1)
         z_t2 = F.normalize(z_t2, dim=-1)
-
-        # Compute similarity for temporal and instance losses
-        sim_temporal = torch.einsum('btd,btd->bt', z_t1, z_t2)  # Per time step
-        sim_instance = torch.einsum('btd,bjd->btj', z_t1, z_t2)  # Across batch
+        
+        sim_temporal = torch.einsum('bd,bd->b', z_t1, z_t2)  # Self similarity
+        sim_instance = torch.einsum('bd,jd->bj', z_t1, z_t2)  # Cross instance similarity
 
         # Compute loss
         loss_temporal = -torch.log(torch.exp(sim_temporal / self.temperature) / torch.sum(torch.exp(sim_temporal / self.temperature), dim=-1, keepdim=True))

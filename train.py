@@ -63,7 +63,7 @@ class Trainer():
                 datas_acc = []
                 for dataset in tqdm(train_folders, desc=f'Epoch {i}', leave=False):
                     dset = createDataset(os.path.join(self.datapath, dataset))
-                    dloader = torch.utils.data.DataLoader(dset, batch_size = 5, collate_fn=collate)
+                    dloader = torch.utils.data.DataLoader(dset, batch_size = 1, collate_fn=collate)
                     ls = [] # batch loss
                     preds, gt = [], []
                     for batch in tqdm(dloader, desc='Dataloader...', leave=False):
@@ -71,31 +71,39 @@ class Trainer():
                         samples = samples.permute(1, 0, 2).to(self.device)
                         labels = labels.to(self.device)
                         chs = samples.shape[1]
+                        
                         if view_strat == 'split':
-                            views = [samples[:, i, :].unsqueeze(1) for i in range(chs)]
+                                views = [[samples[j, i, :].unsqueeze(1) for i in range(chs)] for j in range(samples.shape[0])]
                         else: 
                             permuted_indices = torch.randperm(chs)
                             sep = torch.randint(2, chs-2)
                             group1 = permuted_indices[:sep]
                             group2 = permuted_indices[sep:]
 
-                            views = [samples[:, group1, :].mean(dim=0, keepdim=True), 
-                                    samples[:, group2, :].mean(dim=0, keepdim=True)]
+                            views = [samples[:, group1, :].mean(dim=1, keepdim=True), 
+                                    samples[:, group2, :].mean(dim=1, keepdim=True)]
+                            print(len(views), len(views[0]), len(views[0][0]))
 
-                        embeddings = [self.model(v) for v in views]
+                        embeddings = [self.model(torch.tensor(np.array(v)).permute(2, 0, 1)) for v in views]
                         loss = 0
                         for i in range(len(embeddings)):
                             for j in range(i + 1, len(embeddings)):
                                 loss += self.loss(embeddings[i], embeddings[j])
-                        final = torch.mean(embeddings, axis=1)
-                        preds = self.model.classify(final)
-                        preds.append(self.model.classify(final))
+                        for i in range(len(embeddings)):
+                            embeddings[i] = embeddings[i].detach().numpy()
+                        
+                        final = torch.tensor(np.mean(embeddings, axis=1)).to(self.device)
+                        res = self.model.classify(final)
+                        res = torch.argmax(res, 1)
+                        preds.append(res)
                         gt.append(labels)
                         self.optimizer.zero_grad()
                         loss.backward()
                         self.optimizer.step()
                         ls.append(loss.item())
-
+                    
+                    preds = np.concatenate(preds, axis=None)
+                    gt = np.concatenate(gt, axis=None)
                     datas_loss.append(np.mean(ls).item())
                     datas_acc.append(balanced_accuracy_score(gt, preds))
                 epoch_loss.append(np.mean(datas_loss).item())
@@ -106,7 +114,7 @@ class Trainer():
                 
                 eval_loss.append(e_loss)
                 eval_acc.append(e_acc)
-                log.write(f'\n\n\tValid Loss: {e_loss}\n\tValid Accuracy: {e_acc[-1]}')
+                log.write(f'\n\n\tValid Loss: {e_loss}\n\tValid Accuracy: {e_acc}')
                 log.write(f'\n\tValid Precision: {prec}\n\tValid Recall: {rec}\n\tValid F1-score: {f}')
         
         torch.save(self.model.state_dict(), self.save_path)
@@ -122,11 +130,13 @@ class Trainer():
         for dataset in tqdm(eval_folders, desc=f'Evaluation after epoch {i}...', leave=False):
             with torch.no_grad():
                 dset = createDataset(os.path.join(self.datapath, dataset))
-                dloader = torch.utils.data.DataLoader(dset, batch_size = 5, collate_fn=collate)
+                dloader = torch.utils.data.DataLoader(dset, batch_size = 1, collate_fn=collate)
                 ls = [] # batch loss
                 preds, gt = [], []
                 for batch in tqdm(dloader, leave=False):
                     samples, labels = batch
+                    samples = samples.permute(1, 0, 2).to(self.device)
+                    labels = labels.to(self.device)
                     chs = samples.shape[1]
                     if view_strat == 'split':
                         views = [samples[:, i, :].reshape(1, -1) for i in range(chs)]
@@ -145,13 +155,15 @@ class Trainer():
                         for j in range(i + 1, len(embeddings)):
                             loss += self.loss(embeddings[i], embeddings[j])
                     ls.append(loss.item())
-                    final = np.mean(embeddings, axis=1)
+                    for i in range(len(embeddings)):
+                        embeddings[i] = embeddings[i].detach().numpy()
+                    final = torch.tensor(np.mean(embeddings, axis=1)).to(self.device)
                     preds.append(self.model.classify(final))
                     gt.append(labels)
 
                 datas_loss.append(np.mean(ls).item())
-                preds = np.concatenate(preds)
-                gt = np.concatenate(gt)
+                preds = np.concatenate(preds, axis=None)
+                gt = np.concatenate(gt, axis=None)
                 datas_acc.append(balanced_accuracy_score(gt, preds))
                 prec, rec, f, _ = precision_recall_fscore_support(gt, preds)
                 datas_prec.append(prec)
@@ -189,6 +201,7 @@ class Trainer():
         pass
 
 if __name__ == '__main__':
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    t=Trainer('data\Dataset\You snooze you win', 20, 'bla', 'bla', Model())
+    #device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    #print(f'Using {device}')
+    t=Trainer('data\Dataset\You snooze you win', 20, 'model_mpnn_conv.pt', 'model_mpnn_conv.log.txt', Model(), device='cpu')
     t.pretrain('split')
