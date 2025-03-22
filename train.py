@@ -289,7 +289,11 @@ if __name__ == '__main__':
     t_loss, t_acc, val_loss, val_acc = t.pretrain('group')
     t.plot(t_loss, val_loss, t_acc, val_acc, 'group', False)
     
-    t=Trainer('data\Dataset\You snooze you win', 20, 'model_mpnn_conv_split.pt', 'model_mpnn_conv_split.log.txt', Model(6, view_strat='split'), device=device, view_strat='split')
+    t=Trainer('data\Dataset\You snooze you win', 20, './models/model_mpnn_att_group.pt', './logs/model_mpnn_att_group.log.txt', Model(6, view_strat='group'), device=device, view_strat='group', attention=True, attention_heads=4)
+    t_loss, t_acc, val_loss, val_acc = t.pretrain('group')
+    t.plot(t_loss, val_loss, t_acc, val_acc, 'group', False)
+    
+    t=Trainer('data\Dataset\You snooze you win', 20, 'model_split.pt', 'model_split.log.txt', Model(6, view_strat='split'), device=device, view_strat='split')
     t_loss, t_acc, val_loss, val_acc = t.pretrain('split')
     t.plot(t_loss, val_loss, t_acc, val_acc, 'split', False)
     
@@ -297,6 +301,10 @@ if __name__ == '__main__':
     t_loss, t_acc = t.finetune('group')
     t.plot(t_loss, None, t_acc, None, 'group', True)
     
-    t = Trainer('data\Dataset\sleep-cassette', 20, './models/model_mpnn_conv_split_finetuned.pt', './logs/model_mpnn_conv_split_finetuned_log.txt', model_path='./models/model_mpnn_conv_split.pt', device=device, view_strat='split', finetune=True)
+    t = Trainer('data\Dataset\sleep-cassette', 20, './models/model_mpnn_att_group_finetuned.pt', './logs/model_mpnn_att_group_finetuned_log.txt', model_path='./models/model_mpnn_att_group.pt', device=device, view_strat='group', finetune=True, attention=True, attention_heads=4)
+    t_loss, t_acc = t.finetune('group')
+    t.plot(t_loss, None, t_acc, None, 'group', True)
+    
+    t = Trainer('data\Dataset\sleep-cassette', 20, './models/model_split_finetuned.pt', './logs/model_split_finetuned_log.txt', model_path='./models/model_split.pt', device=device, view_strat='split', finetune=True)
     t_loss, t_acc = t.finetune('split')
     t.plot(t_loss, None, t_acc, None, 'split', True)
