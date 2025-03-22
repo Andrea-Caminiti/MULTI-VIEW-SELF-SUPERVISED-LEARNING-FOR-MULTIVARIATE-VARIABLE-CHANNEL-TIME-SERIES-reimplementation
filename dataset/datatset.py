@@ -94,13 +94,12 @@ def createDataset(folderPath):
         subject = f[:f.index('_')]  
         if 'sleep-cassette' in folderPath:
             chs = [np.split(ch, len(ch)//3000) for ch in raw.get_data()] # The data in sleep cassette is made up of 30s windows
-            data = [chs, labels]
+            data = [np.array(chs), labels]
         else:
             chs = [window(ch, start) for ch in raw.get_data()]
             data = [chs, labels]
         thinkers[subject] = data
         del data, labels, raw
-        gc.collect()
     
     aug = EEGAugmentations()
     d_set = EEGDataset(list(thinkers.values()), aug)

@@ -42,10 +42,12 @@ class MPNN_GAT(nn.Module):
                 x = torch.relu(x) 
 
             
-            combined_outputs.append(x.mean(dim=0))
+            combined_outputs.append(x.mean(dim=1))
 
-        return self.readout(torch.stack(combined_outputs))
+        return 
 
+    def readout(self, v1, v2):
+        return self.readout(torch.stack([v1.mean(dim=1), v2.mean(dim=1)]))
 
 class MPNN_CONV(nn.Module):
     def __init__(self, embedding_dim=64, hidden_dim=64, num_layers=3):
@@ -67,7 +69,7 @@ class MPNN_CONV(nn.Module):
         Returns:
             Tensor of shape (batch_size, embedding_dim) - Combined representation
         """
-        batch_size, num_channels, _ = embeddings.shape
+        batch_size, num_channels, *_ = embeddings.shape
         device = embeddings.device
         
         
@@ -83,6 +85,10 @@ class MPNN_CONV(nn.Module):
                 x = torch.relu(x)
             
             
-            combined_outputs.append(x.mean(dim=0))
-
-        return self.readout(torch.stack(combined_outputs))
+            combined_outputs.append(x)
+            
+        return torch.stack(combined_outputs)
+    
+    
+    def rout(self, v1, v2):
+        return self.readout(torch.stack([v1.mean(dim=1), v2.mean(dim=1)]))

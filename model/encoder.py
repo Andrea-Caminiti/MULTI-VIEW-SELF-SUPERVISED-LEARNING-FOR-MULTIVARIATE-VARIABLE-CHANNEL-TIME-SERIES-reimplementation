@@ -16,7 +16,27 @@ class Encoder(nn.Module):
             nn.GroupNorm(32, 256),
             nn.GELU(),
 
-            nn.Conv1d(256, embedding_dim, kernel_size=2, stride=2)  # 1000 -> 500
+            nn.Conv1d(256, 256, kernel_size=2, stride=2), # 1000 -> 500
+            nn.Dropout(0.1),
+            nn.GroupNorm(32, 256),
+            nn.GELU(),
+
+            nn.Conv1d(256, 256, kernel_size=2, stride=2), # 500 -> 250
+            nn.Dropout(0.1),
+            nn.GroupNorm(32, 256),
+            nn.GELU(),
+
+            nn.Conv1d(256, 256, kernel_size=2, stride=2), # 250 -> 125
+            nn.Dropout(0.1),
+            nn.GroupNorm(32, 256),
+            nn.GELU(),
+
+            nn.Conv1d(256, 256, kernel_size=2, stride=2), # 125 -> 62
+            nn.Dropout(0.1),
+            nn.GroupNorm(32, 256),
+            nn.GELU(),
+
+            nn.Conv1d(256, embedding_dim, kernel_size=2, stride=2)  # 62 -> 31
         )
 
     def forward(self, x):
