@@ -1,94 +1,31 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GCNConv, GATConv
-
-class MPNN_GAT(nn.Module):
-    def __init__(self, embedding_dim=64, hidden_dim=64, num_heads=4, num_layers=3):
-        """
-        Args:
-            embedding_dim: Feature size of each node.
-            hidden_dim: Hidden size of the MPNN layers.
-            num_heads: Number of attention heads in GAT.
-            num_layers: Number of GAT layers.
-        """
-        super(MPNN_GAT, self).__init__()
-        self.convs = nn.ModuleList([
-            GATConv(embedding_dim, hidden_dim, heads=num_heads, concat=False) for _ in range(num_layers)
-        ])
-        self.readout = nn.Linear(hidden_dim, embedding_dim)
-
-    def forward(self, embeddings):
-        """
-        Args:
-            embeddings: Tensor of shape (batch_size, num_channels, embedding_dim)
-        
-        Returns:
-            Tensor of shape (batch_size, embedding_dim) - Combined representation
-        """
-        batch_size, num_channels, _ = embeddings.shape
-        device = embeddings.device
-
-       
-        edge_index = torch.combinations(torch.arange(num_channels, device=device), r=2).T  # Pairs
-        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)  # Make bidirectional
-
-        
-        combined_outputs = []
-        for i in range(batch_size):
-            x = embeddings[i]  # shape: (num_channels, embedding_dim)
-
-            for conv in self.convs:
-                x = conv(x, edge_index)
-                x = torch.relu(x) 
-
-            
-            combined_outputs.append(x.mean(dim=1))
-
-        return 
-
-    def readout(self, v1, v2):
-        return self.readout(torch.stack([v1.mean(dim=1), v2.mean(dim=1)]))
+from torch_geometric.nn import GCNConv
 
 class MPNN_CONV(nn.Module):
-    def __init__(self, embedding_dim=64, hidden_dim=64, num_layers=3):
-        """
-        Args:
-            embedding_dim: Feature size of each node.
-            hidden_dim: Hidden size of the MPNN layers.
-            num_layers: Number of message passing steps.
-        """
+    def __init__(self, embedding_dim=128, hidden_dim=128, num_layers=1):
+       
         super(MPNN_CONV, self).__init__()
         self.convs = nn.ModuleList([GCNConv(embedding_dim, hidden_dim) for _ in range(num_layers)])
         self.readout = nn.Linear(hidden_dim, embedding_dim)
+        self.activation = torch.nn.LeakyReLU()
 
-    def forward(self, embeddings):
-        """
-        Args:
-            embeddings: Tensor of shape (batch_size, num_channels, embedding_dim)
-        
-        Returns:
-            Tensor of shape (batch_size, embedding_dim) - Combined representation
-        """
-        batch_size, num_channels, *_ = embeddings.shape
+    def forward(self, embeddings, b, ch):
         device = embeddings.device
+        # --------------- Taken from the repo of the paper --------------------------
+        message_from = torch.arange(b*ch).unsqueeze(1).repeat(1, (ch-1)).view(-1)
+        message_to = torch.arange(b*ch).view(b, ch).unsqueeze(1).repeat(1, ch, 1)
+        idx = ~torch.eye(ch).view(1, ch, ch).repeat(b, 1, 1).bool()
+        message_to = message_to[idx].view(-1)
+        # -----------------------------------------------------------------------------
+        edge_index = torch.stack((message_from, message_to)).to(device)
         
-        
-        edge_index = torch.combinations(torch.arange(num_channels, device=device), r=2).T  # Pairs
-        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)  # Make bidirectional
-
-        
-        combined_outputs = []
-        for i in range(batch_size):
-            x = embeddings[i]  # shape: (num_channels, embedding_dim)
-            for conv in self.convs:
-                x = conv(x, edge_index)
-                x = torch.relu(x)
-            
-            
-            combined_outputs.append(x)
-            
-        return torch.stack(combined_outputs)
+        for conv in self.convs:
+            embeddings = conv(embeddings, edge_index)
+            embeddings = self.activation(embeddings)
+        return embeddings
     
     
-    def rout(self, v1, v2):
-        return self.readout(torch.stack([v1.mean(dim=1), v2.mean(dim=1)]))
+    def rout(self, x):
+        res = self.readout(x) # Shape: (batch_size, num_channels, reduced_time_steps_ embedding_dim)
+        return res

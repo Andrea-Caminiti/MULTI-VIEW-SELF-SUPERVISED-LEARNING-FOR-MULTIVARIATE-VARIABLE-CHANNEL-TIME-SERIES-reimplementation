@@ -29,8 +29,8 @@ def extract_labels(raw):
     except ValueError:
         events_map = {'nonrem1': 0, 'nonrem2': 1, 'nonrem3': 2, 'rem': 3, 'wake': 4}
         events = mne.events_from_annotations(raw, event_id=events_map, chunk_duration=30)[0]
-    
-    start = events[0][0]
+
+    start = events[0, 0]
     events = events[:, -1]
         
     return events, start
