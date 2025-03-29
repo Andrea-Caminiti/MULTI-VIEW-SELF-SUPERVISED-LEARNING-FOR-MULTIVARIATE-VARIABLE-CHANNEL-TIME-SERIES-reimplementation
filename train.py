@@ -357,21 +357,13 @@ if __name__ == '__main__':
         os.makedirs('./models')
         os.makedirs('./logs')
         
-    # t=Trainer('data\Dataset\You snooze you win', 10, './models/model_mpnn_conv_group.pt', './logs/model_mpnn_conv_group.log.txt', Model(6, view_strat='group'), device=device, view_strat='group')
-    # t_loss, val_loss = t.pretrain('group')
-    # t.plot(t_loss, val_loss, None, 'group', False)
+    t=Trainer('data\Dataset\You snooze you win', 10, './models/model_mpnn_conv_group.pt', './logs/model_mpnn_conv_group.log.txt', Model(6, view_strat='group'), device=device, view_strat='group')
+    t_loss, val_loss = t.pretrain('group')
+    t.plot(t_loss, val_loss, None, 'group', False)
     
-    # t = Trainer('data\Dataset\sleep-cassette', 10, './models/model_mpnn_conv_group_finetuned.pt', './logs/model_mpnn_conv_group_finetuned_log.txt', model_path='./models/model_mpnn_conv_group.pt', device=device , view_strat='group', finetune=True)
-    # t_loss, t_acc = t.finetune('group')
-    # t.plot(t_loss, None, t_acc, 'group', True)
-    
-    # t=Trainer('data\Dataset\You snooze you win', 10, './models/model_mpnn_att_group.pt', './logs/model_mpnn_att_group.log.txt', Model(6, view_strat='group'), device=device, view_strat='group', attention=True, attention_heads=4)
-    # t_loss, val_loss = t.pretrain('group')
-    # t.plot(t_loss, val_loss, None, 'group', False)
-    
-    # t = Trainer('data\Dataset\sleep-cassette', 10, './models/model_mpnn_att_group_finetuned.pt', './logs/model_mpnn_att_group_finetuned_log.txt', model_path='./models/model_mpnn_att_group.pt', device=device, view_strat='group', finetune=True, attention=True, attention_heads=4)
-    # t_loss, t_acc = t.finetune('group')
-    # t.plot(t_loss, None, t_acc, 'group', True)
+    t = Trainer('data\Dataset\sleep-cassette', 10, './models/model_mpnn_conv_group_finetuned.pt', './logs/model_mpnn_conv_group_finetuned_log.txt', model_path='./models/model_mpnn_conv_group.pt', device=device , view_strat='group', finetune=True)
+    t_loss, t_acc = t.finetune('group')
+    t.plot(t_loss, None, t_acc, 'group', True)
     
     t=Trainer('data\Dataset\You snooze you win', 10, 'model_split.pt', './logs/model_split.log.txt', Model(6, view_strat='split'), device=device, view_strat='split')
     t_loss, val_loss = t.pretrain('split')
