@@ -1,0 +1,40 @@
+######################### FINETUNING REPORT Sleep-Cassette Dataset #########################
+Training with MPNN_GAT: False
+Training with view strategy: split
+Epoch 0: 
+	Training Loss: 1.6313096000598026
+	Training Accuracy: 0.2663924088773981
+Epoch 1: 
+	Training Loss: 1.599978023308974
+	Training Accuracy: 0.26840784241135285
+Epoch 2: 
+	Training Loss: 1.5236263660284188
+	Training Accuracy: 0.2910674328348137
+Epoch 3: 
+	Training Loss: 1.4137402818753169
+	Training Accuracy: 0.3823801264870237
+Epoch 4: 
+	Training Loss: 1.5167831893150623
+	Training Accuracy: 0.3470416321151959
+Epoch 5: 
+	Training Loss: 1.4648010524419637
+	Training Accuracy: 0.33442696117484083
+Epoch 6: 
+	Training Loss: 1.3698782049692593
+	Training Accuracy: 0.39557331355272873
+Epoch 7: 
+	Training Loss: 1.455735011284168
+	Training Accuracy: 0.35642690161346124
+Epoch 8: 
+	Training Loss: 1.4088911012961314
+	Training Accuracy: 0.38499082677706425
+Epoch 9: 
+	Training Loss: 1.3484279981026281
+	Training Accuracy: 0.3719716365890653
+######################### Test Result #########################
+
+\Test Loss: 0.9805903792381286
+\Test Accuracy: 0.5711269049313368
+\Test Precision: 0.5509781446950922
+\Test Recall: 0.5848138747884941
+	Valid F1-score: 0.5538028610609723

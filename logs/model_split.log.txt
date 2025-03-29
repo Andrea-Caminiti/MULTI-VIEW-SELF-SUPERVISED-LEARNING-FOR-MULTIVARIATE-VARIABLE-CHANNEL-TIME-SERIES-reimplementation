@@ -1,0 +1,33 @@
+######################### TRAINING REPORT You Snooze You Win Dataset #########################
+Training with MPNN_GAT: False
+Training with view strategy: split
+Epoch 0: 
+	Training Loss: 172.45465370359875
+	Valid Loss: 68.34406785964966
+Epoch 1: 
+	Training Loss: 76.6426943324861
+	Valid Loss: 45.68412656784058
+Epoch 2: 
+	Training Loss: 56.91572522208804
+	Valid Loss: 39.04373703002929
+Epoch 3: 
+	Training Loss: 47.60535134701502
+	Valid Loss: 36.96282138824463
+Epoch 4: 
+	Training Loss: 42.9492224806831
+	Valid Loss: 36.05558128356934
+Epoch 5: 
+	Training Loss: 40.4905250662849
+	Valid Loss: 35.608196353912355
+Epoch 6: 
+	Training Loss: 39.02407448178246
+	Valid Loss: 35.434560775756836
+Epoch 7: 
+	Training Loss: 38.110582875070115
+	Valid Loss: 35.33632555007935
+Epoch 8: 
+	Training Loss: 37.47702090853736
+	Valid Loss: 35.21218757629394
+Epoch 9: 
+	Training Loss: 37.028568423362
+	Valid Loss: 35.17448034286499
